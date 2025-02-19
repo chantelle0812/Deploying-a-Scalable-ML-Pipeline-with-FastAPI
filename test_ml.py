@@ -1,28 +1,116 @@
 import pytest
 # TODO: add necessary import
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from ml.data import process_data
+from ml.model import (
+    train_model,
+    compute_model_metrics,
+    inference,
+    save_model,
+    load_model,
+    performance_on_categorical_slice
+)
 
 # TODO: implement the first test. Change the function name and input as needed
-def test_one():
+@pytest.fixture
+def sample_data():
     """
-    # add description for the first test
+    # create sample data for testing
     """
     # Your code here
-    pass
+    return pd.DataFrame({
+        'age': [39, 40, 41, 42],
+        'workclass': ['State-gov', 'Private', 'Private', 'Self-emp'],
+        'education': ['Bachelors', 'Masters', 'Doctorate', 'Bachelors'],
+        'salary': ['<=50K','>50K', '>50k', '<=50K']
+    })
+    return data
+
+def test_process_data(sample_data):
+    """ Test data processing, categorical data correctly encoded"""
+    cat_features = ['workclass','education']
+
+    X, y, encoder, lb = process_data(
+        sample_data, 
+        categorical_features = cat_features, 
+        label = 'salary',
+        training= True
+    )
+
+    assert X.shape[0] == len(sample_data), f"Expected {len(sample_data)} samples, got {X.shape[0]}"
+    
+    # Check encoder and lb are created
+    assert encoder is not None, "Encoder should not be None"
+    assert lb is not None, "LabelBinarizer should not be None"
+    
+    # Check y is binary
+    assert all(yi in [0, 1] for yi in y), "Labels should be binary (0 or 1)"
+    
+    # Check X contains both numerical and encoded categorical data
+    # We should have: 1 numerical feature (age) + encoded categories
+    assert X.shape[1] > 1, "Should have more than 1 feature after encoding"
+
+    
 
 
 # TODO: implement the second test. Change the function name and input as needed
-def test_two():
+def test_input_validation():
     """
-    # add description for the second test
+    Test input validation for the API:
+    - Tests data types
+    - Tests value ranges
+    - Tests required fields
     """
-    # Your code here
-    pass
+    test_input = {
+        "age": 39,
+        "workclass": "State-gov",
+        "education": "Bachelors",
+        "marital-status": "Never-married",
+        "occupation": "Adm-clerical",
+        "relationship": "Not-in-family",
+        "race": "White",
+        "sex": "Male",
+        "hours-per-week": 40,
+        "native-country": "United-States"
+    }
+    
+    # Validate input data types
+    assert isinstance(test_input["age"], int), "Age should be integer"
+    assert isinstance(test_input["workclass"], str), "Workclass should be string"
+    assert isinstance(test_input["education"], str), "Education should be string"
+    assert isinstance(test_input["hours-per-week"], int), "Hours-per-week should be integer"
+    
+    # Validate value ranges
+    assert 0 <= test_input["age"] <= 100, "Age should be between 0 and 100"
+    assert 0 <= test_input["hours-per-week"] <= 168
+    
 
 
 # TODO: implement the third test. Change the function name and input as needed
-def test_three():
+def test_model_predictions():
     """
-    # add description for the third test
+    Test model predictions:
+    - Creates sample data
+    - Trains model
+    - Tests predictions
     """
-    # Your code here
-    pass
+    # Create sample training data
+    X_train = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    y_train = np.array([0, 1, 1])
+    
+    # Train model
+    model = train_model(X_train, y_train)
+    
+    # Make predictions
+    preds = inference(model, X_train)
+    
+    # Test predictions
+    assert len(preds) == len(y_train), "Number of predictions should match number of samples"
+    assert all(isinstance(pred, (int, np.integer)) for pred in preds), "Predictions should be integers"
+    assert all(pred in [0, 1] for pred in preds), "Predictions should be binary"
+
+if __name__ == "__main__":
+    pytest.main(['-v'])
+    
