@@ -20,13 +20,13 @@ def sample_data():
     # create sample data for testing
     """
     # Your code here
-    return pd.DataFrame({
+    df = pd.DataFrame({
         'age': [39, 40, 41, 42],
         'workclass': ['State-gov', 'Private', 'Private', 'Self-emp'],
         'education': ['Bachelors', 'Masters', 'Doctorate', 'Bachelors'],
         'salary': ['<=50K','>50K', '>50k', '<=50K']
     })
-    return test_data
+    return df
 
 def test_process_data(sample_data):
     """ Test data processing, categorical data correctly encoded"""
